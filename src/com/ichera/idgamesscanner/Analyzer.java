@@ -1,6 +1,7 @@
 package com.ichera.idgamesscanner;
 
 import java.io.File;
+import java.text.ParseException;
 
 public class Analyzer 
 {
@@ -51,6 +52,7 @@ public class Analyzer
 	private void checkMissingWad()
 	{
 		boolean foundWad = false;
+		String nonstandard = null;
 		for(Unzipper.Entry entry : m_entries)
 		{
 			if(Util.hasExtension(entry.name, "wad") || 
@@ -61,13 +63,34 @@ public class Analyzer
 				foundWad = true;
 				break;
 			}
+			else if(entry.content != null)
+			{
+				try
+				{
+					new Wad(entry.content);
+					nonstandard = entry.name;
+				}
+				catch(ParseException e)
+				{
+				}
+			}
 		}
 		if(!foundWad)
-			warn("Missing .wad file!");
+		{
+			if(nonstandard != null && nonstandard.length() > 0)
+				info("Nonstandard wad extension: " + nonstandard);
+			else
+				warn("Missing .wad file!");
+		}
 	}
 	
 	private void warn(String s)
 	{
-		System.out.println("WARNING " + m_zipFile + ": " + s);
+		System.out.println("WARNING: " + m_zipFile + ": " + s);
+	}
+	
+	private void info(String s)
+	{
+		System.out.println("INFO: " + m_zipFile + ": " + s);
 	}
 }

@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.zip.ZipEntry;
 
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -131,48 +130,4 @@ public class Unzipper implements Closeable
 		return dsf;
 	}
 	
-	private static Entry[] getByteContents(String prefix, byte[] bytes)
-	{
-		ArrayList<Entry> entries = new ArrayList<Entry>();
-		java.util.zip.ZipInputStream zipStream = 
-				new java.util.zip.ZipInputStream(new ByteArrayInputStream(bytes));
-		ZipEntry entry = null;
-		for(;;)
-		{
-			try
-			{
-				entry = zipStream.getNextEntry();
-
-				if(entry == null)
-					break;
-				
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				byte[] buffer = new byte[BUFSIZ];
-				int count;
-				while((count = zipStream.read(buffer)) != -1)
-					baos.write(buffer, 0, count);
-				entries.add(new Entry(prefix + '/' + entry.getName(), 
-						baos.toByteArray()));
-				
-			}
-			catch(IOException e)
-			{
-			}
-			finally
-			{
-				try
-				{
-					zipStream.closeEntry();
-				}
-				catch(IOException e)
-				{
-					e.printStackTrace();
-				}
-			}
-		}
-		
-		Entry[] dsf = new Entry[entries.size()];
-		entries.toArray(dsf);
-		return dsf;
-	}
 }

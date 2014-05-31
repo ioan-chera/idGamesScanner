@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipInputStream;
 
 import com.ichera.idgamesscanner.Unzipper.Entry;
@@ -75,7 +74,7 @@ public class Unzipper2
 					if(Util.hasExtension(entry.getName(), "zip"))
 					{
 						Unzipper2 subzip = 
-								new Unzipper2(entry.getName(), 
+								new Unzipper2(prefix + '/' + entry.getName(), 
 										new ByteArrayInputStream(baos.toByteArray()));
 						entries.addAll(Arrays.asList(subzip.getEntries()));
 					}

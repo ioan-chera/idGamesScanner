@@ -1,7 +1,6 @@
 package com.ichera.idgamesscanner;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.List;
 
 public class Main 

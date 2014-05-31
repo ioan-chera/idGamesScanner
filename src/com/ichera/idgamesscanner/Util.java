@@ -41,4 +41,12 @@ public class Util
 	{
 		return name.toLowerCase().matches(".*\\." + extension);
 	}
+	
+	public static int readInt32(byte[] buffer, int offset)
+	{
+		return (buffer[offset] & 0xff) + 
+				((buffer[offset + 1] & 0xff) << 8) +
+				((buffer[offset + 2] & 0xff) << 16) +
+				((buffer[offset + 3] & 0xff) << 24);
+	}
 }
