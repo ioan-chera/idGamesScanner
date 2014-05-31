@@ -53,10 +53,10 @@ public class Analyzer
 		boolean foundWad = false;
 		for(Unzipper.Entry entry : m_entries)
 		{
-			if(entry.name.toLowerCase().matches(".*\\.wad") || 
-					entry.name.toLowerCase().matches(".*\\.pk3") ||
-					entry.name.toLowerCase().matches(".*\\.pk7") || 
-					entry.name.toLowerCase().matches(".*\\.pke"))
+			if(Util.hasExtension(entry.name, "wad") || 
+					Util.hasExtension(entry.name, "pk3") ||
+					Util.hasExtension(entry.name, "pk7") || 
+					Util.hasExtension(entry.name, "pke"))
 			{
 				foundWad = true;
 				break;

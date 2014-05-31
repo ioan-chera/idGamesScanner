@@ -2,11 +2,14 @@
 
 package com.ichera.idgamesscanner;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.zip.ZipEntry;
 
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -101,7 +104,15 @@ public class Unzipper implements Closeable
 			
 			while((entry = uz.getNext()) != null)
 			{
-				entries.add(entry);
+				if(entry.content != null && Util.hasExtension(entry.name, "zip"))
+				{
+					Unzipper2 subzip = 
+							new Unzipper2(entry.name, 
+									new ByteArrayInputStream(entry.content));
+					entries.addAll(Arrays.asList(subzip.getEntries()));
+				}
+				else
+					entries.add(entry);
 			}
 		}
 		catch(ZipException e)
@@ -113,6 +124,51 @@ public class Unzipper implements Closeable
 		{
 			if(uz != null)
 				Util.close(uz);
+		}
+		
+		Entry[] dsf = new Entry[entries.size()];
+		entries.toArray(dsf);
+		return dsf;
+	}
+	
+	private static Entry[] getByteContents(String prefix, byte[] bytes)
+	{
+		ArrayList<Entry> entries = new ArrayList<Entry>();
+		java.util.zip.ZipInputStream zipStream = 
+				new java.util.zip.ZipInputStream(new ByteArrayInputStream(bytes));
+		ZipEntry entry = null;
+		for(;;)
+		{
+			try
+			{
+				entry = zipStream.getNextEntry();
+
+				if(entry == null)
+					break;
+				
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				byte[] buffer = new byte[BUFSIZ];
+				int count;
+				while((count = zipStream.read(buffer)) != -1)
+					baos.write(buffer, 0, count);
+				entries.add(new Entry(prefix + '/' + entry.getName(), 
+						baos.toByteArray()));
+				
+			}
+			catch(IOException e)
+			{
+			}
+			finally
+			{
+				try
+				{
+					zipStream.closeEntry();
+				}
+				catch(IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
 		}
 		
 		Entry[] dsf = new Entry[entries.size()];

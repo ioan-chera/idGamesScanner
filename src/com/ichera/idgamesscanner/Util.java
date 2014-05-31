@@ -36,4 +36,9 @@ public class Util
 			return "";
 		return name.substring(index);
 	}
+	
+	public static boolean hasExtension(String name, String extension)
+	{
+		return name.toLowerCase().matches(".*\\." + extension);
+	}
 }

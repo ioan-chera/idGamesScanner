@@ -1,6 +1,7 @@
 package com.ichera.idgamesscanner;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.List;
 
 public class Main 
@@ -30,11 +31,21 @@ public class Main
 			if(i % PRINT_STEP == 0)
 				System.out.print('.');
 			
-			entries = Unzipper.getContents(file.getPath(), true);
-						
-			lyzer.setZipFile(file);
-			lyzer.setEntries(entries);
-			lyzer.check();
+//			try
+//			{
+//				Unzipper2 unzipper = new Unzipper2(file.getPath());
+				
+//				entries = unzipper.getEntries();
+				entries = Unzipper.getContents(file.getPath(), false);
+							
+				lyzer.setZipFile(file);
+				lyzer.setEntries(entries);
+				lyzer.check();
+//			}
+//			catch(FileNotFoundException e)
+//			{
+//				System.err.println(file.getPath() + " not found!");
+//			}
 			
 			++i;
 		}
