@@ -40,7 +40,8 @@ public class Analyzer
 		long expandedSize = 0;
 		for(Unzipper.Entry entry : m_entries)
 		{
-			expandedSize += entry.content.length;
+			if(entry.content != null)
+				expandedSize += entry.content.length;
 		}
 		long zipSize = m_zipFile.length();
 		if(expandedSize >= SUSPICIOUS_SIZE && expandedSize >= 100 * zipSize)
@@ -52,7 +53,10 @@ public class Analyzer
 		boolean foundWad = false;
 		for(Unzipper.Entry entry : m_entries)
 		{
-			if(entry.name.toLowerCase().matches(".*\\.wad"))
+			if(entry.name.toLowerCase().matches(".*\\.wad") || 
+					entry.name.toLowerCase().matches(".*\\.pk3") ||
+					entry.name.toLowerCase().matches(".*\\.pk7") || 
+					entry.name.toLowerCase().matches(".*\\.pke"))
 			{
 				foundWad = true;
 				break;

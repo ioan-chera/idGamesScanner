@@ -2,64 +2,71 @@
 
 package com.ichera.idgamesscanner;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.List;
+
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.io.ZipInputStream;
+import net.lingala.zip4j.model.FileHeader;
+
 
 public class Unzipper implements Closeable
 {
 	private static final int BUFSIZ = 8192;
 	
-	private boolean m_silent;
-	private String mPath;
-	private ZipEntry mZipEntry;
-	private ZipInputStream mZipStream;
+	private final String mPath;
+	private final ZipFile mZipFile;
+	private final List<?> mHeaders;
 	
-	public Unzipper(String path) throws FileNotFoundException
+	private int mCurIndex;
+	
+	public Unzipper(String path) throws ZipException
 	{
 		mPath = path;
-		mZipStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(mPath)));
+		mZipFile = new ZipFile(path);
+		mHeaders = mZipFile.getFileHeaders();
 	}
-	
-	void setSilent(boolean value)
-	{
-		m_silent = value;
-	}
-	
+		
 	public Entry getNext()
 	{
+		if(mCurIndex >= mHeaders.size())
+			return null;
+		
+		ZipInputStream stream = null;
+		FileHeader header = null;
 		try
 		{
-			mZipEntry = mZipStream.getNextEntry();
-			if(mZipEntry != null)
-			{
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				byte[] buffer = new byte[BUFSIZ];
-				int count;
-				while((count = mZipStream.read(buffer)) != -1)
-					baos.write(buffer, 0, count);
-				return new Entry(mZipEntry.getName(), baos.toByteArray());
-			}
+			header = (FileHeader)mHeaders.get(mCurIndex);
+			stream = mZipFile.getInputStream(header);
+	
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			byte[] buffer = new byte[BUFSIZ];
+			int count;
+			while((count = stream.read(buffer)) != -1)
+				baos.write(buffer, 0, count);
+			return new Entry(header.getFileName(), baos.toByteArray());
+		}
+		catch(ZipException e)
+		{
+//			System.err.println(e.getClass().getSimpleName() +  " on " + mPath);
+			// commented out because it happens too often
 		}
 		catch(IOException e)
 		{
-			if(!m_silent)
-			{
-				System.err.printf("On %s:\n", mPath);
-				e.printStackTrace();
-			}
+			System.err.println(e.getClass().getSimpleName() +  " on " + mPath);
 		}
-		catch(IllegalArgumentException e)
+		finally
 		{
-			System.err.printf("On %s:\n", mPath);
-			System.err.println("WARNING: Stopped reading ZIP, invalid internal value");
+			++mCurIndex;
+			if(stream != null)
+				Util.close(stream);
 		}
+		if(header != null)
+			return new Entry(header.getFileName(), null);
 		return null;
 	}
 	
@@ -78,7 +85,7 @@ public class Unzipper implements Closeable
 	@Override
 	public void close() throws IOException 
 	{
-		mZipStream.close();
+//		mZipFile.close();
 	}
 	
 	public static Entry[] getContents(String path, boolean silent)
@@ -89,7 +96,6 @@ public class Unzipper implements Closeable
 		try
 		{
 			uz = new Unzipper(path);
-			uz.setSilent(silent);
 			Unzipper.Entry entry;
 			// Must have .WAD and .TXT with names matching the path
 			
@@ -98,13 +104,15 @@ public class Unzipper implements Closeable
 				entries.add(entry);
 			}
 		}
-		catch(FileNotFoundException e)
+		catch(ZipException e)
 		{
+			System.err.println("On " + path + ":");
 			e.printStackTrace();
 		}
 		finally
 		{
-			Util.close(uz);
+			if(uz != null)
+				Util.close(uz);
 		}
 		
 		Entry[] dsf = new Entry[entries.size()];

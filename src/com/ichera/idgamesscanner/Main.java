@@ -24,12 +24,13 @@ public class Main
 		Analyzer lyzer = new Analyzer();
 		int i = 0;
 		
+		System.out.println("Starting...");
 		for(File file : zipFiles)
 		{
 			if(i % PRINT_STEP == 0)
 				System.out.print('.');
 			
-			entries = Unzipper.getContents(file.getPath(), false);
+			entries = Unzipper.getContents(file.getPath(), true);
 						
 			lyzer.setZipFile(file);
 			lyzer.setEntries(entries);
