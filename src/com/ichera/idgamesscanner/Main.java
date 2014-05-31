@@ -1,76 +1,43 @@
 package com.ichera.idgamesscanner;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
+import java.util.List;
 
 public class Main 
 {
+	private static final int PRINT_STEP = 1024;
+	
 	public static void main(String[] args)
 	{
-		File folder = new File(args[0]);
-		File[] zipFiles = folder.listFiles(new FileFilter() 
+		if(args.length < 1)
 		{
-			@Override
-			public boolean accept(File pathname) 
-			{
-				if(!pathname.isFile())
-					return false;
-				String path = pathname.getPath();
-				if(path.length() < 5)
-					return false;
-				path = path.substring(path.length() - 4);
-				return path.equalsIgnoreCase(".zip");
-			}
-		});
+			System.err.println("Please specify the path to the idgames/levels/ root.");
+			return;
+		}
+		
+		RecursiveFileGetter rfg = new RecursiveFileGetter(args[0]);
+		rfg.setNameRegex(".+\\.zip");
+		rfg.collect();
+		List<File> zipFiles = rfg.getFiles();
 		
 		Unzipper.Entry[] entries;
+		Analyzer lyzer = new Analyzer();
+		int i = 0;
+		
 		for(File file : zipFiles)
 		{
-			entries = Unzipper.getContents(file.getPath());
-			System.out.printf("%s\n\t", file.getName());
-			for(Unzipper.Entry entry : entries)
-				if(Util.getExtension(entry.name).equalsIgnoreCase(".wad"))
-					System.out.print(entry.name + " ");
-			System.out.print('\n');
+			if(i % PRINT_STEP == 0)
+				System.out.print('.');
 			
+			entries = Unzipper.getContents(file.getPath(), false);
+						
+			lyzer.setZipFile(file);
+			lyzer.setEntries(entries);
+			lyzer.check();
+			
+			++i;
 		}
+		System.out.println("Finished.");
 	}
 	
-	private static void zipOperation(File file)
-	{
-		Unzipper uz = null;
-		try
-		{
-			uz = new Unzipper(file.getPath());
-			Unzipper.Entry entry;
-			// Must have .WAD and .TXT with names matching the path
-			String bare = Util.getNameWithoutExtension(file.getName());
-			
-			boolean textFound = false, wadFound = false;
-			StringBuilder builder = new StringBuilder();
-			while((entry = uz.getNext()) != null)
-			{
-				if(entry.name.equalsIgnoreCase(bare + ".wad"))
-					wadFound = true;
-				else if(entry.name.equalsIgnoreCase(bare + ".txt"))
-					textFound = true;
-				builder.append(entry.name);
-				builder.append(' ');
-			}
-			if(!wadFound || !textFound)
-			{
-				System.out.println("Bad .txt/.wad name or not included: " + file.getPath());
-				System.out.println("Contents is: " + builder.toString());
-			}
-		}
-		catch(FileNotFoundException e)
-		{
-			e.printStackTrace();
-		}
-		finally
-		{
-			Util.close(uz);
-		}
-	}
 }

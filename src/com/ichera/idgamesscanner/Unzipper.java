@@ -12,11 +12,11 @@ import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-
 public class Unzipper implements Closeable
 {
 	private static final int BUFSIZ = 8192;
 	
+	private boolean m_silent;
 	private String mPath;
 	private ZipEntry mZipEntry;
 	private ZipInputStream mZipStream;
@@ -25,6 +25,11 @@ public class Unzipper implements Closeable
 	{
 		mPath = path;
 		mZipStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(mPath)));
+	}
+	
+	void setSilent(boolean value)
+	{
+		m_silent = value;
 	}
 	
 	public Entry getNext()
@@ -44,8 +49,11 @@ public class Unzipper implements Closeable
 		}
 		catch(IOException e)
 		{
-			System.err.printf("On %s:\n", mPath);
-			e.printStackTrace();
+			if(!m_silent)
+			{
+				System.err.printf("On %s:\n", mPath);
+				e.printStackTrace();
+			}
 		}
 		catch(IllegalArgumentException e)
 		{
@@ -73,7 +81,7 @@ public class Unzipper implements Closeable
 		mZipStream.close();
 	}
 	
-	public static Entry[] getContents(String path)
+	public static Entry[] getContents(String path, boolean silent)
 	{
 		ArrayList<Entry> entries = new ArrayList<Entry>();
 		
@@ -81,6 +89,7 @@ public class Unzipper implements Closeable
 		try
 		{
 			uz = new Unzipper(path);
+			uz.setSilent(silent);
 			Unzipper.Entry entry;
 			// Must have .WAD and .TXT with names matching the path
 			
