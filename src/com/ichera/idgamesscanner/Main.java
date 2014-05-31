@@ -1,11 +1,20 @@
 package com.ichera.idgamesscanner;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Main 
 {
 	private static final int PRINT_STEP = 1024;
+	
+	private final Map<Md5Key, String> m_md5Map = new HashMap<Md5Key, String>();
+	
+	public Map<Md5Key, String> getMd5Map()
+	{
+		return m_md5Map;
+	}
 	
 	public static void main(String[] args)
 	{
@@ -21,7 +30,9 @@ public class Main
 		List<File> zipFiles = rfg.getFiles();
 		
 		Unzipper.Entry[] entries;
-		Analyzer lyzer = new Analyzer();
+		Main global = new Main();
+		
+		Analyzer lyzer = new Analyzer(global);
 		int i = 0;
 		
 		System.out.println("Starting...");
@@ -36,7 +47,7 @@ public class Main
 				
 //				entries = unzipper.getEntries();
 				entries = Unzipper.getContents(file.getPath(), false);
-							
+				
 				lyzer.setZipFile(file);
 				lyzer.setEntries(entries);
 				lyzer.check();
