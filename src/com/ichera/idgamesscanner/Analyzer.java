@@ -33,11 +33,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.ichera.idgamesscanner;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Analyzer 
 {
@@ -141,6 +144,7 @@ public class Analyzer
 		checkSuspiciousSize();
 		checkMissingWad();
 		checkDuplicateEntries();
+		harvestEmails();
 	}
 	
 	private void checkSuspiciousSize()
@@ -148,8 +152,8 @@ public class Analyzer
 		long expandedSize = 0;
 		for(Unzipper.Entry entry : m_entries)
 		{
-			if(entry.content != null)
-				expandedSize += entry.content.length;
+			if(entry.getContent() != null)
+				expandedSize += entry.getContent().length;
 		}
 		long zipSize = m_zipFile.length();
 		if(expandedSize >= SUSPICIOUS_SIZE && expandedSize >= 100 * zipSize)
@@ -162,20 +166,20 @@ public class Analyzer
 		String nonstandard = null;
 		for(Unzipper.Entry entry : m_entries)
 		{
-			if(Util.hasExtension(entry.name, "wad") || 
-					Util.hasExtension(entry.name, "pk3") ||
-					Util.hasExtension(entry.name, "pk7") || 
-					Util.hasExtension(entry.name, "pke"))
+			if(Util.hasExtension(entry.getName(), "wad") || 
+					Util.hasExtension(entry.getName(), "pk3") ||
+					Util.hasExtension(entry.getName(), "pk7") || 
+					Util.hasExtension(entry.getName(), "pke"))
 			{
 				foundWad = true;
 				break;
 			}
-			else if(entry.content != null)
+			else if(entry.getContent() != null)
 			{
 				try
 				{
-					new Wad(entry.content);
-					nonstandard = entry.name;
+					new Wad(entry.getContent());
+					nonstandard = entry.getName();
 				}
 				catch(ParseException e)
 				{
@@ -197,12 +201,12 @@ public class Analyzer
 		{
 			for(Unzipper.Entry entry : m_entries)
 			{
-				if(entry.content == null || entry.content.length == 0)
+				if(entry.getContent() == null || entry.getContent().length == 0)
 					continue;
 				Md5Key key = 
 						new Md5Key(
 								MessageDigest.getInstance("MD5")
-								.digest(entry.content));
+								.digest(entry.getContent()));
 				
 				if(s_commonMd5.contains(key))	// skip common utility files
 					continue;
@@ -210,7 +214,7 @@ public class Analyzer
 				if(m_global.getMd5Map().containsKey(key) && 
 						!m_global.getMd5Map().get(key).equals(m_zipFile.getPath()))
 				{
-					warn("File " + entry.name + " same as in " + 
+					warn("File " + entry.getName() + " same as in " + 
 							m_global.getMd5Map().get(key));
 				}
 				else
@@ -231,5 +235,34 @@ public class Analyzer
 	private void info(String s)
 	{
 		System.out.println("INFO: " + m_zipFile + ": " + s);
+	}
+	
+	private void harvestEmails()
+	{
+		final Pattern pattern = Pattern.compile("[\\.a-zA-Z0-9\\-]+@[\\.a-zA-Z0-9\\-]+");
+
+		for(Unzipper.Entry entry : m_entries)
+		{
+			if(entry.getContent() != null && 
+					(Util.hasExtension(entry.getName(), "txt") ||
+					Util.hasExtension(entry.getName(), "doc")))
+			{
+				// assume text file
+				try
+				{
+					String string = new String(entry.getContent(), "UTF-8");
+					Matcher m = pattern.matcher(string);
+					while(m.find())
+					{
+						String s = m.group();
+						m_global.getEmailSet().add(s);
+					}
+				}
+				catch(UnsupportedEncodingException e)
+				{
+					System.err.println("Internal error");
+				}
+			}
+		}
 	}
 }

@@ -104,8 +104,18 @@ public class Unzipper implements Closeable
 	
 	public static class Entry
 	{
-		public String name;
-		public byte[] content;
+		private String name;
+		private byte[] content;
+		
+		public String getName()
+		{
+			return name;
+		}
+		
+		public byte[] getContent()
+		{
+			return content;
+		}
 		
 		public Entry(String inName, byte[] inContent)
 		{

@@ -53,6 +53,12 @@ public class Md5Key
 		m_digest = DatatypeConverter.parseHexBinary(hexString);
 	}
 	
+	@Override
+	public String toString()
+	{
+		return m_digest != null ? DatatypeConverter.printHexBinary(m_digest) : "";
+	}
+	
 	public void setDigest(byte[] digest)
 	{
 		if(digest == null || digest.length != 16)

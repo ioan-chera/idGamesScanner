@@ -34,18 +34,26 @@ package com.ichera.idgamesscanner;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Main 
 {
 	private static final int PRINT_STEP = 1024;
 	
 	private final Map<Md5Key, String> m_md5Map = new HashMap<Md5Key, String>();
+	private final Set<String> m_emailSet = new HashSet<String>();
 	
 	public Map<Md5Key, String> getMd5Map()
 	{
 		return m_md5Map;
+	}
+	
+	public Set<String> getEmailSet()
+	{
+		return m_emailSet;
 	}
 	
 	public static void main(String[] args)
@@ -92,6 +100,11 @@ public class Main
 			++i;
 		}
 		System.out.println("Finished.");
+		
+		for(String s : global.m_emailSet)
+		{
+			System.out.println(s);
+		}
 	}
 	
 }
